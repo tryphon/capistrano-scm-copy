@@ -3,6 +3,7 @@ namespace :copy do
   archive_name = "archive.tar.gz"
   include_dir  = fetch(:include_dir) || "*"
   exclude_dir  = Array(fetch(:exclude_dir))
+  base_dir = fetch(:base_dir) || "."
 
   exclude_args = exclude_dir.map { |dir| "--exclude '#{dir}'"}
 
@@ -10,8 +11,8 @@ namespace :copy do
   tar_roles = fetch(:tar_roles, 'all')
 
   desc "Archive files to #{archive_name}"
-  file archive_name => FileList[include_dir].exclude(archive_name) do |t|
-    cmd = ["tar -cvzf #{t.name}", *exclude_args, *t.prerequisites]
+  file archive_name => FileList[File.join(base_dir, include_dir)].exclude(archive_name) do |t|
+    cmd = ["tar -cvz -C #{base_dir} -f #{t.name}", *exclude_args, *t.prerequisites.map { |f| f.gsub %r{^#{base_dir}/}, '' }]
     sh cmd.join(' ')
   end
 
